@@ -1,0 +1,71 @@
+<link rel="stylesheet" href="/styles/filemanager.css">
+<link rel="stylesheet" href="/styles/editor.css">
+<dialog id="renameFile">
+    <button class="close"><ion-icon name="close-outline"></ion-icon></button>
+    <form action="/renameInEditor" method="post">
+        <input type="hidden" name="root" value="{{root}}"/>
+        <input type="text" name="name" placeholder="Rename file" value="{{filename}}">
+        <input type="hidden" id="renameFileContent" name="content" value="{{content}}">
+        <button type="submit">Save & rename file</button>
+    </form>
+</dialog>
+<form action="/save" method="POST">
+    <input type="hidden" name="root" value="{{root}}">
+    <header>
+        <div style="display: flex; gap: 20px; align-items: center">
+            <h2>
+                <a href="/" style="text-decoration: none">File Manager</a>
+            </h2>
+            <div class="roots">
+                {{#each roots}}
+                    <a href="#" style="font-size: 22px">/</a>
+                    <a href="#">{{name}}</a>
+                {{/each}}
+            </div>
+        </div>
+        <div>
+            <button type="submit" class="headerBtn">Save & Close</button>
+            <button type="button" onclick="document.getElementById('renameFile').showModal()" class="headerBtn">Change name</button>
+            <button type="button" class="headerBtn" onclick="changeEditorMode()">Color mode</button>
+        </div>
+    </header>
+    <main style="background: #fff">
+        <div class="numsOfLines" id="numsOfLines" style="border-right: 1px solid lightgray; color: #111"></div>
+        <textarea name="content" style="color: #111">{{content}}</textarea>
+    </main>
+</form>
+<script>
+    let colorMode = 'light';
+
+    const textarea = document.querySelector('textarea');
+    const numsOfLines = document.querySelector('#numsOfLines');
+    const main = document.querySelector('main');
+    const renameFileContent = document.querySelector('#renameFileContent');
+
+    textarea.addEventListener('input', () => {
+        const lines = textarea.value.split('\n').length;
+        if (lines !== numsOfLines.innerHTML.split('<br>').length - 1) {
+            numsOfLines.innerHTML = '';
+            for (let i = 1; i <= lines + 1; i++) {
+                numsOfLines.innerHTML += i + '<br>';
+            }
+            textarea.style.height = `${numsOfLines.clientHeight}px`
+        }
+        renameFileContent.value = textarea.value;
+    });
+    textarea.dispatchEvent(new Event('input'));
+
+    function changeEditorMode() {
+        colorMode = colorMode === 'light' ? 'dark' : 'light';
+        main.style.background = colorMode === 'light' ? '#fff' : '#111';
+        main.style.color = colorMode === 'light' ? '#111' : '#fff';
+        textarea.style.color = colorMode === 'light' ? '#111' : '#fff';
+        numsOfLines.style.color = colorMode === 'light' ? '#111' : '#fff';
+    }
+
+    document.querySelectorAll('.close').forEach(btn => {
+        btn.addEventListener('click', () => {
+            btn.parentElement.close()
+        })
+    });
+</script>

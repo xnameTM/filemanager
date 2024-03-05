@@ -1,0 +1,199 @@
+<link rel="stylesheet" href="/styles/filemanager.css">
+<header>
+    <div style="display: flex; gap: 20px; align-items: center">
+        <h2>
+            {{#if tabled}}
+                <a href="/?tabled=true" style="text-decoration: none">File Manager</a>
+            {{else}}
+                <a href="/" style="text-decoration: none">File Manager</a>
+            {{/if}}
+        </h2>
+        <div class="roots">
+            {{#if tabled}}
+                <a href="/?tabled=true" style="font-size: 22px">/</a>
+                {{#each roots}}
+                    <a href="{{href}}&tabled=true">{{name}}</a>
+                    <a href="{{href}}&tabled=true" style="font-size: 22px">/</a>
+                {{/each}}
+            {{else}}
+                <a href="/" style="font-size: 22px">/</a>
+                {{#each roots}}
+                    <a href="{{href}}">{{name}}</a>
+                    <a href="{{href}}" style="font-size: 22px">/</a>
+                {{/each}}
+            {{/if}}
+
+        </div>
+    </div>
+    <div>
+        {{#if tabled}}
+            <a href="{{root}}&tabled=false" class="headerBtn">TABLED</a>
+        {{else}}
+            <a href="{{root}}&tabled=true" class="headerBtn">NOT TABLED</a>
+        {{/if}}
+        <button id="newFolderBtn" class="headerBtn">New folder</button>
+        <button id="newFileBtn" class="headerBtn">New File</button>
+        <button id="uploadBtn" class="headerBtn">Upload</button>
+    </div>
+</header>
+<main>
+    <dialog id="newFolderDialog">
+        <button class="close"><ion-icon name="close-outline"></ion-icon></button>
+        <form action="/folder{{root}}" method="post">
+            <input type="text" name="name" placeholder="Folder name">
+            <button type="submit">Add folder</button>
+        </form>
+    </dialog>
+    <dialog id="newFileDialog">
+        <button class="close"><ion-icon name="close-outline"></ion-icon></button>
+        <form action="/file{{root}}" method="post">
+            <input type="text" name="name" placeholder="File name">
+            <button type="submit">Add file</button>
+        </form>
+    </dialog>
+    <dialog id="uploadDialog">
+        <button class="close"><ion-icon name="close-outline"></ion-icon></button>
+        <form action="/upload{{root}}" method="post" enctype="multipart/form-data">
+            <input type="file" name="file" multiple>
+            <button type="submit">Upload</button>
+        </form>
+    </dialog>
+    <dialog id="renameFolderDialog">
+        <button class="close"><ion-icon name="close-outline"></ion-icon></button>
+        <form action="/rename" method="post">
+            <input type="hidden" name="root" value="{{root}}"/>
+            <input type="hidden" name="path" id="renameFolderPath"/>
+            <input type="text" name="name" placeholder="Rename folder">
+            <button type="submit">Rename folder</button>
+        </form>
+    </dialog>
+    {{#if error}}
+        <div class="error-wrapper">
+            <div class="error">
+                <h2>{{error}}</h2>
+                <a href="/">Back to main page</a>
+            </div>
+        </div>
+    {{/if}}
+    {{#if tabled}}
+        <table>
+            <thead>
+            <tr>
+                <th></th>
+                <th>Name</th>
+                <th>Modified</th>
+                <th>Extension</th>
+                <th>Size</th>
+                <th style="width: 40px"></th>
+            </tr>
+            </thead>
+            <tbody>
+            {{#each files}}
+                <tr>
+                    <td style="display: grid; place-items: center">
+                        <ion-icon name="{{icon}}"></ion-icon>
+                    </td>
+                    <td>
+                        {{#if editable}}
+                            <a href="{{editHref}}">{{name}}</a>
+                        {{else}}
+                            <a href="{{href}}">{{name}}</a>
+                        {{/if}}
+                    </td>
+                    <td>{{modified}}</td>
+                    {{#if isDirectory}}
+                        <td>Folder</td>
+                    {{else}}
+                        {{#if extension}}
+                            <td>{{extension}}</td>
+                        {{else}}
+                            <td>-</td>
+                        {{/if}}
+                    {{/if}}
+                    <td>{{size}}</td>
+                    <td style="width: 40px; display: grid; place-items: center">
+                        <form action="/delete{{delete}}" method="post">
+                            <button class="rmvBtn" type="submit">
+                                <ion-icon name="trash-outline"></ion-icon>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            {{/each}}
+            </tbody>
+        </table>
+    {{else}}
+        <div class="container">
+            {{#each files}}
+                {{#if isDirectory}}
+                    <div style="position: relative">
+                        <a class="file" href="{{href}}">
+                            <ion-icon name="folder-outline"></ion-icon>
+                            <h5>{{name}}</h5>
+                        </a>
+                        <div style="position: absolute; top: 0; right: 0; transform: translate(50%, -50%); scale: .8">
+                            <form action="/delete{{delete}}" method="post">
+                                <button class="rmvBtn" type="submit">
+                                    <ion-icon name="trash-outline"></ion-icon>
+                                </button>
+                            </form>
+                        </div>
+                        <div style="position: absolute; top: calc(100% - 2px); right: 0; transform: translate(50%, -50%); scale: .8">
+                            <button style="color: white" class="rmvBtn renameBtn" onclick="(() => {document.getElementById('renameFolderPath').value = '{{rename}}';document.getElementById('renameFolderDialog').showModal()})()" type="submit">
+                                <ion-icon name="create-outline"></ion-icon>
+                            </button>
+                        </div>
+                    </div>
+                {{/if}}
+            {{/each}}
+        </div>
+        <div class="container">
+            {{#each files}}
+                {{#unless isDirectory}}
+                    <div style="position: relative">
+                        <a class="file" href="{{href}}">
+                            <ion-icon name="{{icon}}"></ion-icon>
+                            <h5>{{name}}</h5>
+                        </a>
+                        <div style="position: absolute; top: 0; right: 0; transform: translate(50%, -50%); scale: .8">
+                            <form action="/delete{{delete}}" method="post">
+                                <button class="rmvBtn" type="submit">
+                                    <ion-icon name="trash-outline"></ion-icon>
+                                </button>
+                            </form>
+                        </div>
+                        {{#if editable}}
+                            <div style="position: absolute; top: calc(100% - 2px); right: 0; transform: translate(50%, -50%); scale: .8">
+                                <a class="rmvBtn renameBtn" href="{{editHref}}" style="color: #fff">
+                                    <ion-icon name="create-outline"></ion-icon>
+                                </a>
+                            </div>
+                        {{/if}}
+                    </div>
+                {{/unless}}
+            {{/each}}
+        </div>
+    {{/if}}
+</main>
+
+<script>
+    let folderToRename = null
+
+    document.getElementById('newFolderBtn').addEventListener('click', () => {
+        document.getElementById('newFolderDialog').showModal()
+    })
+
+    document.getElementById('newFileBtn').addEventListener('click', () => {
+        document.getElementById('newFileDialog').showModal()
+    })
+
+    document.getElementById('uploadBtn').addEventListener('click', () => {
+        document.getElementById('uploadDialog').showModal()
+    })
+
+    document.querySelectorAll('.close').forEach(btn => {
+        btn.addEventListener('click', () => {
+            btn.parentElement.close()
+        })
+    })
+</script>

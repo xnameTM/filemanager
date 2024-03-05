@@ -1,0 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
+
+.numsOfLines {
+    width: 50px;
+    height: 100%;
+    text-align: right;
+    padding-right: 5px;
+}
+
+main {
+    display: flex;
+    min-height: calc(100vh - 70px);
+    overflow-y: auto;
+    position: relative;
+}
+
+textarea {
+    width: calc(100% - 50px);
+    border: none;
+    outline: none;
+    padding: 0 5px;
+    height: 100%;
+    left: 50px;
+    top: 0;
+    position: absolute;
+    overflow: hidden;
+    resize: none;
+    background: transparent;
+}
+
+.numsOfLines, textarea {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 14px;
+    line-height: 1.35;
+}
