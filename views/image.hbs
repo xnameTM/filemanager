@@ -1,0 +1,91 @@
+<link rel="stylesheet" href="/styles/filemanager.css">
+<link rel="stylesheet" href="/styles/image.css">
+<dialog id="renameImage">
+    <button class="close"><ion-icon name="close-outline"></ion-icon></button>
+    <form action="/renameInImage" method="post">
+        <input type="hidden" name="root" value="{{root}}"/>
+        <input type="text" name="name" placeholder="Rename image" value="{{filename}}">
+        <button type="submit">Save & rename file</button>
+    </form>
+</dialog>
+<header>
+    <div style="display: flex; gap: 20px; align-items: center">
+        <h2>
+            <a href="/" style="text-decoration: none">File Manager</a>
+        </h2>
+        <div class="roots">
+            {{#each roots}}
+                <a href="#" style="font-size: 22px">/</a>
+                <a href="#">{{name}}</a>
+            {{/each}}
+        </div>
+    </div>
+    <div>
+        <button type="button" class="headerBtn" onclick="document.querySelector('main').classList.toggle('active')">Filters</button>
+        <button type="button" class="headerBtn" onclick="document.getElementById('renameImage').showModal()">Change name</button>
+        <button type="button" class="headerBtn" onclick="save()">Save</button>
+        <a href="{{previewHref}}" target="_blank" type="button" class="headerBtn">Preview</a>
+    </div>
+</header>
+<main>
+    <div class="filterBar" id="filterBar">
+        {{#each effects}}
+            <button onclick="document.getElementById('img').style.filter = '{{this}}(100%)'; filter = '{{this}}'">
+                <p>{{this}}</p>
+                <div style="background: url('{{../src}}') center center / cover no-repeat; width: 120px; height: 120px; filter: {{this}}(100%);"></div>
+            </button>
+        {{/each}}
+        <button onclick="document.getElementById('img').style.filter = ''; filter = 'none'">
+            <p>none</p>
+            <div style="background: url('{{src}}') center center / cover no-repeat; width: 120px; height: 120px;"></div>
+        </button>
+    </div>
+    <div class="workspace">
+        <img src="{{src}}" id="img" alt="Image">
+    </div>
+</main>
+<script>
+    let filter = 'none';
+
+    document.querySelectorAll('.close').forEach(btn => {
+        btn.addEventListener('click', () => {
+            btn.parentElement.close()
+        })
+    });
+
+    function save() {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const imgFromHtml = document.getElementById('img');
+        const img = new Image();
+        img.src = imgFromHtml.src;
+        img.onload = () => {
+            canvas.width = imgFromHtml.naturalWidth;
+            canvas.height = imgFromHtml.naturalHeight;
+            ctx.filter = `${filter}(100%)`;
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            const dataUrl = canvas.toDataURL('image/jpeg');
+
+            fetch(`${location.protocol}//${location.hostname}:${location.port}/saveImage`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    root: '{{root}}',
+                    dataUrl: dataUrl.slice(dataUrl.indexOf(',') + 1)
+                })
+            }).then(res => res.json()).then(data => {
+                if (data.success) {
+                    alert('Image saved successfully');
+                } else {
+                    console.log(data.error)
+                    alert('Error saving image');
+                }
+            }).catch((err) => {
+                console.log(err)
+                alert('Error saving image');
+            })
+        }
+    }
+</script>

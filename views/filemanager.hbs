@@ -169,6 +169,13 @@
                                 </a>
                             </div>
                         {{/if}}
+                        {{#if (isImage extension)}}
+                            <div style="position: absolute; top: calc(100% - 2px); right: 0; transform: translate(50%, -50%); scale: .8">
+                                <a class="rmvBtn renameBtn" href="{{imageHref}}" style="color: #fff">
+                                    <ion-icon name="eye-outline"></ion-icon>
+                                </a>
+                            </div>
+                        {{/if}}
                     </div>
                 {{/unless}}
             {{/each}}

@@ -30,6 +30,5 @@ textarea {
 
 .numsOfLines, textarea {
     font-family: "JetBrains Mono", monospace;
-    font-size: 14px;
     line-height: 1.35;
 }

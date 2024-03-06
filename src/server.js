@@ -10,18 +10,21 @@ import {__dirname} from "./utils.js";
  * @interface Page {endpoint: string, method: Method, handler: (req, res) => void}
  * @param port {Number}
  * @param pages {Page[]}
+ * @param helpers {Object}
  */
-export default async function bootstrap(port, pages) {
+export default async function bootstrap(port, helpers = {}, pages) {
     // tworzony jest nowy serwer
     const app = express();
 
     // ustawiamy body parser, aby móc odczytywać dane z formularzy
     app.use(bodyParser.urlencoded({ extended: true }));
+    app.use(bodyParser.json());
 
     // ustawiamy silnik szablonów
     app.set('views', path.join(__dirname, 'views'));
     app.engine('hbs', hbs({
-        defaultLayout: 'main.hbs'
+        defaultLayout: 'main.hbs',
+        helpers
     }));
 
     app.set('view engine', 'hbs');

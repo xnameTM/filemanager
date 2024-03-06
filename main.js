@@ -13,13 +13,17 @@ const UPLOAD_DIR = path.join(__dirname, 'uploads');
 if (!fs.existsSync(UPLOAD_DIR))
     fs.mkdirSync(UPLOAD_DIR);
 
+const imageEffects = ['grayscale', 'invert', 'sepia']
+
 // główna funkcja
 async function main() {
     // port z env lub 3000
     const PORT = process.env.PORT || 3000;
 
     // uruchom serwer
-    await bootstrap(PORT, [
+    await bootstrap(PORT, {
+        isImage: (ext) => ['png', 'jpg', 'jpeg'].includes(ext.slice(1))
+    }, [
         { // endpoint do wyświetlania plików
             endpoint: '/',
             method: 'GET',
@@ -65,7 +69,8 @@ async function main() {
                         delete: '/?root=' + encodeURIComponent(`${root}/${file}`.replace('//', '/')),
                         rename: `${root}/${file}`.replace('//', '/'),
                         editable: ['css', 'html', 'js', 'json', 'txt', 'xml'].includes(path.extname(file).slice(1)),
-                        editHref: `/editor?root=${encodeURIComponent(`${root}/${file}`.replace('//', '/'))}`
+                        editHref: `/editor?root=${encodeURIComponent(`${root}/${file}`.replace('//', '/'))}`,
+                        imageHref: `/image?root=${encodeURIComponent(`${root}/${file}`.replace('//', '/'))}`
                     };
                 });
 
@@ -95,8 +100,6 @@ async function main() {
                 // pobierz root z query stringa
                 const root = req.query?.path;
                 // ma niby przekazywać przeglądarce że ma otwierać pliki, a nie pobierać (nie działa chyba)
-                res.setHeader('Content-Disposition', `inline; filename="${root.slice(root.lastIndexOf('/') + 1)}"`);
-                res.setHeader('Content-Type', 'application/octet-stream');
 
                 // jeśli ścieżka nie istnieje, wyświetl błąd
                 if (!root) {
@@ -220,7 +223,7 @@ async function main() {
                         const rawData = fs.readFileSync(oldPath);
 
                         // zapisz plik
-                        fs.writeFile(newPath, rawData, err => {
+                        fs.writeFile(newPath, Buffer.from(Buffer.from(rawData).toString('base64'), 'base64'), err => {
                             if (err) console.log(err);
 
                             fs.unlinkSync(oldPath);
@@ -380,9 +383,105 @@ async function main() {
 
                 fs.writeFileSync(path.join(UPLOAD_DIR, root), content);
 
-                console.log(content)
-
                 res.redirect(`/?root=${root.slice(0, root.lastIndexOf('/'))}`);
+            }
+        },
+        {
+            endpoint: '/image',
+            method: 'GET',
+            handler: (req, res) => {
+                const root = req.query?.root;
+
+                if (!root) {
+                    res.render('filemanager.hbs', {error: 'Path not specified'});
+                    return;
+                }
+
+                if (!fs.existsSync(path.join(UPLOAD_DIR, root))) {
+                    res.render('filemanager.hbs', {error: 'Path does not exist'});
+                    return;
+                }
+
+                if (!['png', 'jpg', 'jpeg', 'gif'].map(ext => `.${ext}`).includes(path.extname(root))) {
+                    res.render('filemanager.hbs', {error: 'Path is not an image'});
+                    return;
+                }
+
+                if (!fs.statSync(path.join(UPLOAD_DIR, root)).isFile()) {
+                    res.render('filemanager.hbs', {error: 'Path is not a file'});
+                    return;
+                }
+
+                const roots = [];
+
+                root.split('/').filter(s => s !== '').forEach((s, ind, arr) => {
+                    roots.push({
+                        name: s,
+                        href: '/?root=' + encodeURIComponent('/' + arr.filter((_, i) => i <= ind).join('/'))
+                    });
+                });
+
+                res.render('image.hbs', {
+                    roots,
+                    root,
+                    src: `/open?path=${encodeURIComponent(root)}`,
+                    effects: imageEffects,
+                    filename: root.slice(root.lastIndexOf('/') + 1),
+                    previewHref: `/open?path=${encodeURIComponent(root)}`
+                });
+            }
+        },
+        {
+            endpoint: '/renameInImage',
+            method: 'POST',
+            handler: (req, res) => {
+                const {root, name} = req.body;
+
+                // rename File and save content
+                const oldPath = path.join(UPLOAD_DIR, root);
+                const newPath = path.join(UPLOAD_DIR, root.replace(root.slice(root.lastIndexOf('/') + 1), name));
+
+                if (oldPath === newPath) {
+                    res.redirect(`image?${new URLSearchParams({root: root.replace(root.slice(root.lastIndexOf('/') + 1), name)})}`);
+                } else {
+                    if (!fs.existsSync(newPath)) {
+                        fs.rename(oldPath, newPath, err => {
+                            if (err)
+                                res.render('filemanager.hbs', {error: 'Folder includes files. Please delete them first'});
+                            else
+                                res.redirect(`image?${new URLSearchParams({root: root.replace(root.slice(root.lastIndexOf('/') + 1), name)})}`);
+                        });
+                    } else {
+                        res.render('filemanager.hbs', {error: 'Path already exists'});
+                    }
+                }
+            }
+        },
+        {
+            endpoint: '/saveImage',
+            method: 'POST',
+            handler: (req, res) => {
+                const {root, dataUrl} = req.body;
+
+                if (!root) {
+                    res.render('filemanager.hbs', {error: 'Path not specified'});
+                    return;
+                }
+
+                if (!fs.existsSync(path.join(UPLOAD_DIR, root))) {
+                    res.render('filemanager.hbs', {error: 'Path does not exist'});
+                    return;
+                }
+
+                res.header('Content-Type', 'application/json');
+
+                try {
+                    const buffer = Buffer.from(dataUrl, 'base64');
+                    fs.writeFileSync(path.join(UPLOAD_DIR, root), buffer);
+                    res.send({success: true});
+                } catch (error) {
+                    res.send({success: false, error});
+                }
             }
         }
     ]);

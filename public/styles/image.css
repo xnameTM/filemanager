@@ -1,0 +1,64 @@
+main {
+    overflow: hidden;
+    height: calc(100vh - 70px);
+    width: 100%;
+    position: relative;
+}
+
+.filterBar {
+    width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    align-items: center;
+    background: #111111;
+    height: 100%;
+    padding: 10px 0;
+    transition: width .3s;
+    overflow: hidden;
+    z-index: 10;
+    overflow-y: auto;
+}
+
+.filterBar button {
+    background: transparent;
+    border: none;
+    outline: none;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    color: #fff;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: filter .2s ease-out;
+}
+
+.filterBar button:hover {
+    filter: drop-shadow(0 0 5px #ebebeb66);
+}
+
+.active > .filterBar {
+    width: 200px;
+}
+
+.workspace {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    right: 0;
+    transition: width .3s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.active > .workspace {
+    width: calc(100% - 200px);
+}
+
+.workspace img {
+    object-fit: cover;
+}

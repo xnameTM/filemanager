@@ -24,18 +24,21 @@
             </div>
         </div>
         <div>
+            <button type="button" class="headerBtn" onclick="changeFontSize(1)">Font +</button>
+            <button type="button" class="headerBtn" onclick="changeFontSize(-1)">Font -</button>
             <button type="submit" class="headerBtn">Save & Close</button>
             <button type="button" onclick="document.getElementById('renameFile').showModal()" class="headerBtn">Change name</button>
             <button type="button" class="headerBtn" onclick="changeEditorMode()">Color mode</button>
         </div>
     </header>
     <main style="background: #fff">
-        <div class="numsOfLines" id="numsOfLines" style="border-right: 1px solid lightgray; color: #111"></div>
-        <textarea name="content" style="color: #111">{{content}}</textarea>
+        <div class="numsOfLines" id="numsOfLines" style="border-right: 1px solid lightgray; color: #111; font-size: 14px"></div>
+        <textarea name="content" style="color: #111; font-size: 14px">{{content}}</textarea>
     </main>
 </form>
 <script>
     let colorMode = 'light';
+    let fontSize = 14;
 
     const textarea = document.querySelector('textarea');
     const numsOfLines = document.querySelector('#numsOfLines');
@@ -68,4 +71,10 @@
             btn.parentElement.close()
         })
     });
+
+    function changeFontSize(size) {
+        fontSize += size;
+        textarea.style.fontSize = `${fontSize}px`;
+        numsOfLines.style.fontSize = `${fontSize}px`;
+    }
 </script>
